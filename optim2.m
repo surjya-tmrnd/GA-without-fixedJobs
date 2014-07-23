@@ -1,0 +1,837 @@
+function varargout = optim2(varargin)
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @optim2_OpeningFcn, ...
+                   'gui_OutputFcn',  @optim2_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before optim2 is made visible.
+function optim2_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to optim2 (see VARARGIN)
+
+% Choose default command line output for optim2
+global balance_score;
+global correlation_score;
+global distance_score;
+global dist_coef;
+global wait_coef;
+global balance_coef;
+global iterations
+global rjcted
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+iterations = 200;
+balance_score = 0;
+distance_score = 0;
+correlation_score = 0;
+dist_coef = 0.6;
+wait_coef = 0.2;
+balance_coef = 0.2;
+rjcted = [];
+set(handles.edtxtIter,'String',iterations);
+set(handles.edtxtDcof,'String',dist_coef);
+set(handles.edtxtPcof,'String',wait_coef);
+set(handles.edtxtBcof,'String',balance_coef);
+set(handles.stxtDscore,'String',distance_score);
+set(handles.stxtPScore,'String',correlation_score);
+set(handles.stxtBscore,'String',balance_score);
+str = sprintf('0/%d',iterations);
+
+
+% UIWAIT makes optim2 wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = optim2_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+% --- Executes on button press in OrderFileName.
+function OrderFileName_Callback(hObject, eventdata, handles)
+% hObject    handle to OrderFileName (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global OrderFileName;
+[filename,pathname] = uigetfile;
+
+if filename ~= 0
+    OrderFileName = strcat(pathname,filename);
+    set(handles.stxtOrderFile,'String',OrderFileName);
+else
+    set(handles.stxtOrderFile,'String','File Not Selected');
+    OrderFileName = 'File Not Selected';
+end
+
+
+
+function edtxtIter_Callback(hObject, eventdata, handles)
+% hObject    handle to edtxtIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edtxtIter as text
+%        str2double(get(hObject,'String')) returns contents of edtxtIter as a double
+global iterations;
+iterations = str2double(get(hObject,'String'));
+
+% --- Executes during object creation, after setting all properties.
+function edtxtIter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edtxtIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in btnLoad.
+function btnLoad_Callback(hObject, eventdata, handles)
+% hObject    handle to btnLoad (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global sev
+global OrderFileName
+global TeamFileName
+global xy_o
+global xy_t
+global n_o_loc
+global n_t_loc
+global tBld
+global tSkl
+global oBld
+global oSkl
+global duration
+global match_matrix
+global total_wts
+global oTl
+global tTl
+global se_no
+global rjcted
+
+
+% figure('Name','Task and Team Locations','Numbertitle','off');
+scrsz = get(0,'ScreenSize');
+figure('Name','Task and Team Locations','Numbertitle','off','Position',[10 scrsz(4)/8 scrsz(3)/1.5 scrsz(4)/1.5]);
+
+if ~strcmp(TeamFileName,'File Not Selected')
+    fid = fopen(TeamFileName);
+    B = textscan(fid, '%f %f %f %s %s %s', 'delimiter', ',');
+    fclose(fid);
+    xy_t = [B{2} B{3}];
+    tBld = B{4};
+    tBld = char(tBld)
+    tSkl = B{5};
+    tSkl = char(tSkl)
+    tTl = B{6};
+    tTl = char(tTl);
+    n_t_loc = size(tSkl,1);
+    plot(xy_t(:,1),xy_t(:,2),'rx');
+end
+
+hold on
+if ~strcmp(OrderFileName,'File Not Selected')
+    fid = fopen(OrderFileName);
+    B = textscan(fid, '%f %f %f %f %s %s %s %f %s %s %f %f %s %s %s %s', 'delimiter', ',');
+    fclose(fid);
+    n_o_loc = size(B{1},1);
+    
+    for i=1:numel(rjcted)
+        sz = size(B,2);
+        k = find(B{1} == rjcted(i));
+        for j=1:sz
+            B{j}(k) = [];
+        end
+    end
+
+    
+    n_o_loc = size(B{1},1);
+    weights = zeros(n_o_loc,8);
+    
+    % Segment
+    weights(find(strcmp(B{9},'P1')),1) = 50;
+    weights(find(strcmp(B{9},'P2')),1) = 30;
+    weights(find(strcmp(B{9},'P3')),1) = 10;
+    weights(find(strcmp(B{9},'P4')),1) = 10;
+    
+    
+    % Aging
+    weights(find(strcmp(B{10},'Green')),2) = 1;
+    weights(find(strcmp(B{10},'Yellow')),2) = 5;
+    weights(find(strcmp(B{10},'Red')),2) = 10;
+    
+    weights(:,3) = B{11};
+    weights(find(weights(:,3)>8),3) = 8;
+
+    weights(:,4) = B{12};
+    weights(find(weights(:,4)>8),4) = 8;
+    
+    weights(find(strcmp(B{13},'Normal')),5) = 0;
+    weights(find(strcmp(B{13},'Reactive Save')),5) = 33;
+    weights(find(strcmp(B{13},'A&R')),5) = 14;
+    weights(find(strcmp(B{13},'Proactive Churn')),5) = 7;
+    weights(find(strcmp(B{13},'Escalated regulatory')),5) = 33;
+    
+    weights(find(strcmp(B{14},'Yes')),6) = 34;
+    weights(find(strcmp(B{14},'No')),6) = 0;
+    
+    weights(find(strcmp(B{15},'No')),7) = 0;
+    weights(find(strcmp(B{15},'Yes')),7) = 35;
+    
+    weights(find(strcmp(B{16},'Yes')),8) = 5;
+    weights(find(strcmp(B{16},'No')),8) = 0;
+    
+    [total_wts sort_idx] = sort(sum(weights,2),'descend');
+    
+    se_no = B{1}(sort_idx);
+    xy_o = [B{3}(sort_idx) B{4}(sort_idx)];
+    sev = B{2}(sort_idx);
+    oBld = B{5}(sort_idx);
+    oBld = char(oBld);
+    oSkl = B{6}(sort_idx);
+    oSkl = char(oSkl);
+    oTl = B{7}(sort_idx);
+    oTl = char(oTl);
+    duration = B{8}(sort_idx);
+    n_o_loc = size(sev,1);
+    plot(xy_o(:,1),xy_o(:,2),'bs');
+end
+
+
+
+match_matrix = cell(1,n_o_loc);
+
+for i=1:n_o_loc
+    a = find(oBld(i) == tBld);
+    for j=1:size(a)
+        r = rem(a(j),n_t_loc);
+        if( r == 0)
+            a(j) = n_t_loc;
+        else
+            a(j) = r;
+        end
+    end
+    
+    b = find(oSkl(i) == tSkl);
+    for j=1:size(b)
+        r = rem(b(j),n_t_loc);
+        if( r == 0)
+            b(j) = n_t_loc;
+        else
+            b(j) = r;
+        end
+    end
+    
+    c = find(oTl(i) == tTl);
+    for j=1:size(c)
+        r = rem(c(j),n_t_loc);
+        if( r == 0)
+            c(j) = n_t_loc;
+        else
+            c(j) = r;
+        end
+    end
+    
+    match_matrix{i} = findmatch(a,b,c);
+end
+
+dcm_obj = datacursormode(gcf);
+set(dcm_obj,'UpdateFcn',{@dtip_function,tBld,tSkl,oBld,oSkl,xy_t})
+
+hold off
+
+
+% --- Executes on button press in btnRun.
+function btnRun_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRun (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global groups
+global n_t_loc
+global n_o_loc
+global xy_o
+global xy_t
+global c
+global match_matrix
+global duration
+global oBld
+global oSkl
+global tBld
+global tSkl
+global oTl
+global tTl
+global balance_score;
+global correlation_score;
+global distance_score;
+global dist_coef;
+global wait_coef;
+global balance_coef;
+global iterations
+global se_no
+global groups_idx
+global rjcted
+
+
+groups{n_t_loc+1} = [];
+groups_idx = cell(1,n_t_loc);
+temp_timeline = ones(n_t_loc,1) * inf;
+greedySol = zeros(n_t_loc,1);
+for i=1:n_o_loc
+    tms = match_matrix{i};
+    tms_size = size(tms,2);
+    temp_timeline1 = inf(n_t_loc,1);
+    temp_timeline1(tms) = temp_timeline(tms);
+    for j=1:tms_size
+        z = size(groups_idx{tms(j)},2);
+        if z==0
+            dst = sqrt((xy_o(i,1) - xy_t(tms(j),1)).^2+(xy_o(i,2) - xy_t(tms(j),2)).^2);
+        else
+            tmp_loc = groups_idx{tms(j)}(z);
+            dst = sqrt((xy_o(i,1) - xy_o(tmp_loc,1)).^2+(xy_o(i,2) - xy_o(tmp_loc,2)).^2);
+        end
+        
+        if temp_timeline1(tms(j)) ~= inf
+            temp_timeline1(tms(j)) =  temp_timeline1(tms(j)) + dst;
+        else
+            temp_timeline1(tms(j)) = dst;
+        end
+    end
+    [x y] = min(temp_timeline1);
+    if temp_timeline(y) ~= inf
+        temp_timeline(y) = temp_timeline(y) + x + duration(i);
+    else
+        temp_timeline(y) = x + duration(i);
+    end
+    groups_idx{y} = [groups_idx{y} i];
+    greedySol(i) = y;
+end
+
+
+% GA code here
+PopSize = 30;
+best = [];
+best_val = inf;
+pop = create_population(match_matrix,PopSize);
+ftns = zeros(PopSize,1);
+for i=1:PopSize
+   ftns(i) = get_fitness(pop{i});
+end
+
+h = waitbar(0,'Please wait...');
+
+for j=1:iterations
+    pop = select_fittest(pop);
+    for i=1:PopSize
+       ftns(i) = get_fitness(pop{i});
+    end
+
+    min(ftns)
+    pop = crossover(pop,0.25);
+    pop = select_fittest(pop);
+    for i=1:PopSize
+       ftns(i) = get_fitness(pop{i});
+    end
+
+    [p,q] = min(ftns);
+    best = pop{q};
+    best_val = [best_val p];
+
+    get_fitness(best);
+    set(handles.stxtDscore,'String',distance_score);
+    set(handles.stxtPScore,'String',correlation_score);
+    set(handles.stxtBscore,'String',balance_score);
+    set(handles.stxtFtns,'String',p);
+
+    pop = mutate(pop,0.2,match_matrix);
+    pop = select_fittest(pop);
+    for i=1:PopSize
+       ftns(i) = get_fitness(pop{i});
+    end
+    [p,q] = min(ftns);
+    best = pop{q};
+    best_val = [best_val p];
+    
+    get_fitness(best);
+    set(handles.stxtDscore,'String',distance_score);
+    set(handles.stxtPScore,'String',correlation_score);
+    set(handles.stxtBscore,'String',balance_score);
+    set(handles.stxtFtns,'String',p);
+    
+    waitbar(j/iterations,h,sprintf('%d/%d Complete',j,iterations));
+end 
+
+close(h); 
+
+groups_idx = assign_jobs(best);
+groups_dist = get_distance(groups_idx);
+
+
+schedule_matrix{n_t_loc+1} = [];
+for i=1:n_t_loc
+    s = size(groups_idx{i},1);
+    for j=1:s
+       schedule_matrix{i} = [schedule_matrix{i} groups_dist{i}(j)]; 
+       schedule_matrix{i} = [schedule_matrix{i} duration(groups_idx{i}(j))];
+    end
+end
+
+scrsz = get(0,'ScreenSize');
+figure('Name','Jobs Distribution','Numbertitle','off','Position',[10 scrsz(4)/8 scrsz(3)*0.8 scrsz(4)*0.8]);
+
+for i=1:n_t_loc
+    s = size(schedule_matrix{i},2);
+    sum1 = 0;
+    
+    for j=1:s
+        if rem(j,2)==0
+            line([sum1 sum1+schedule_matrix{i}(j)],[i i],'Marker','none','LineStyle','-','Color','blue','LineWidth',5);
+            str = sprintf('%d %d %d %s %s %s',se_no(groups_idx{i}(j/2)),groups_idx{i}(j/2),schedule_matrix{i}(j),oBld(groups_idx{i}(j/2)),oSkl(groups_idx{i}(j/2)),oTl(groups_idx{i}(j/2)));
+            text(sum1, i+0.2 , str, 'Color', 'r','FontSize',8,'FontWeight','light');
+        else
+            line([sum1 sum1+schedule_matrix{i}(j)],[i i],'Marker','none','LineStyle','-','Color','red','LineWidth',1);
+        end
+        sum1 = sum1 + schedule_matrix{i}(j);
+    end
+    str = sprintf('%d %f (%s) (%s) (%s)',i,sum1,tBld(i,:),tSkl(i,:),tTl(i,:));
+    text(10, i+0.5 , str, 'Color', 'r','FontSize',8,'FontWeight','light');
+end
+
+figure('Name','Convergence','Numbertitle','off');
+plot(best_val);
+
+
+figure('Name','Clustering','Numbertitle','off','Position',[10 scrsz(4)/8 scrsz(3)*0.8 scrsz(4)*0.8]);
+ColorSet = varycolor(n_t_loc);
+hold on
+for i=1:n_t_loc
+    s = size(groups_idx{i},1);
+    for j=1:s
+        line([xy_t(i,1) xy_o(groups_idx{i}(j),1)],[xy_t(i,2) xy_o(groups_idx{i}(j),2)],'Color',ColorSet(i,:));
+    end
+end
+
+for i=1:n_t_loc
+    plot(xy_t(:,1),xy_t(:,2),'rs','LineWidth',1,'MarkerEdgeColor','k','MarkerFaceColor','r','MarkerSize',8);
+end
+
+for i=1:n_t_loc
+    plot(xy_o(groups_idx{i},1),xy_o(groups_idx{i},2),'*','Color',ColorSet(i,:));
+end
+hold off
+
+figure('Name','Travelling Path','Numbertitle','off','Position',[10 scrsz(4)/8 scrsz(3)*0.8 scrsz(4)*0.8]);
+hold on;
+
+for i=1:n_t_loc
+    plot([xy_t(i,1); xy_o(groups_idx{i},1)],[xy_t(i,2); xy_o(groups_idx{i},2)],'-','Color',ColorSet(i,:));
+end
+
+for i=1:n_t_loc
+    plot(xy_t(:,1),xy_t(:,2),'rs','LineWidth',1,'MarkerEdgeColor','k','MarkerFaceColor','r','MarkerSize',8);
+end
+
+for i=1:n_t_loc
+    plot(xy_o(groups_idx{i},1),xy_o(groups_idx{i},2),'*','Color',ColorSet(i,:));
+end
+hold off;
+
+
+
+display('ok');
+
+%figure('Name','TSP_GA | Results','Numbertitle','off');
+%plot([3 2],'-');
+
+
+% --------------------------------------------------------------------
+function uitoggletool3_ClickedCallback(hObject, eventdata, handles)
+% hObject    handle to uitoggletool3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in btnTeamFile.
+function btnTeamFile_Callback(hObject, eventdata, handles)
+% hObject    handle to btnTeamFile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global TeamFileName;
+[filename,pathname] = uigetfile;
+
+if filename ~= 0
+    TeamFileName = strcat(pathname,filename);
+    set(handles.stxtTeamFile,'String',TeamFileName);
+else
+    set(handles.stxtTeamFile,'String','File Not Selected');
+    TeamFileName = 'File Not Selected';
+end
+
+
+function output_txt = dtip_function(obj,event_obj,tBld,tSkl,oBld,oSkl,xy_t)
+% Display the position of the data cursor
+% obj          Currently not used (empty)
+% event_obj    Handle to event object
+% output_txt   Data cursor text string (string or cell array of strings).
+
+pos = get(event_obj,'Position');
+dindex = get(event_obj,'DataIndex');
+
+
+if dindex > size(xy_t,1)
+    output_txt = {['X: ',num2str(pos(1),4)],...
+        ['Y: ',num2str(pos(2),4)],['I:',num2str(dindex)],...
+        ['J-BLD:',oBld(dindex,:)],...
+        ['J-SKL:',oSkl(dindex,:)]};
+else
+if ((pos(1) == xy_t(dindex,1)) && (pos(2) == xy_t(dindex,2)))
+    output_txt = {['X: ',num2str(pos(1),4)],...
+        ['Y: ',num2str(pos(2),4)],['I:',num2str(dindex)],...
+        ['T-BLD:',tBld(dindex,:)],...
+        ['T-SKL:',tSkl(dindex,:)]};
+else
+    output_txt = {['X: ',num2str(pos(1),4)],...
+        ['Y: ',num2str(pos(2),4)],['I:',num2str(dindex)],...
+        ['J-BLD:',oBld(dindex,:)],...
+        ['J-SKL:',oSkl(dindex,:)]};
+end
+end
+
+
+% If there is a Z-coordinate in the position, display it as well
+if length(pos) > 2
+    output_txt{end+1} = ['Z: ',num2str(pos(3),4)];
+end
+
+
+function Y=findmatch(A,B,C)
+Y = [];
+for i=1:size(A)
+    for j=1:size(B)
+        for k=1:size(C)
+            if (A(i) == B(j)) && (A(i) == C(k))
+                Y = [Y A(i)];
+                break; 
+            end
+        end
+    end
+end
+
+function pop = create_population(match_matrix,PopSize)
+ChrLength = size(match_matrix,2);
+pop = cell(PopSize,1);
+for j=1:PopSize
+    temp_chr = zeros(ChrLength,1);
+    for i=1:ChrLength
+        if size(match_matrix{i},1) ~= 0
+            temp_chr(i) = match_matrix{i}(randi(numel(match_matrix{i})));
+        end
+    end
+    pop{j} = temp_chr;
+end
+
+function grp = assign_jobs(jobs)
+global n_t_loc
+grp{n_t_loc} = [];
+for i=1:n_t_loc
+   k = find(jobs == i);
+   grp{i} = k;
+end
+
+function ftns = get_fitness(individual)
+global dist_coef;
+global wait_coef;
+global balance_coef;
+global n_t_loc;
+global n_o_loc;
+global duration;
+global balance_score;
+global correlation_score;
+global distance_score;
+global total_wts;
+
+grp = assign_jobs(individual);
+dMat = get_distance(grp);
+WaitMat = get_wait_matrix(grp,dMat);
+effort = zeros(n_t_loc,1);
+for i=1:n_t_loc
+    s = size(grp{i},1);
+    for j=1:s
+        effort(i) = effort(i) + duration(grp{i}(j)) + dMat{i}(j);
+    end
+end
+balance_score = std(effort);
+bal = balance_score * 10;
+[v,idx] = sort(WaitMat);
+a = [1:n_o_loc];
+cVal = corr(a',idx);
+correlation_score = cVal;
+cVal = (1/(1+cVal))*10000;
+distance_score = sum(cell2mat(dMat));
+ftns = dist_coef*distance_score+wait_coef*cVal+balance_coef*bal;
+
+
+function DistMat = get_distance(groups_idx)
+global xy_o;
+global xy_t;
+s = size(groups_idx,2);
+DistMat{s} = [];
+for i=1:s
+    k = groups_idx{i};
+    l = size(k,1);
+    for j=1:l
+       if j==1
+           d = sqrt((xy_t(i,1)-xy_o(k(j),1)).^2+(xy_t(i,2)-xy_o(k(j),2)).^2);
+       else
+           d = sqrt((xy_o(k(j),1)-xy_o(k(j-1),1)).^2+(xy_o(k(j),2)-xy_o(k(j-1),2)).^2);
+       end
+       DistMat{i}(j) = d;
+    end
+end
+
+
+function new_pop = select_fittest(pop)
+PopSize = size(pop,1);
+ftns = zeros(PopSize,1);
+sel = zeros(PopSize,1);
+for i=1:PopSize
+    ftns(i) = get_fitness(pop{i}); 
+end
+
+for i=1:PopSize
+    ftns(i) = 1/(1+ftns(i)); 
+end
+
+T = sum(ftns);
+for i=1:PopSize
+    ftns(i) = ftns(i)/T; 
+end
+
+cumu = zeros(PopSize,1);
+for i=1:PopSize
+    if i==1
+        cumu(i) = ftns(i);
+    else
+        cumu(i) = cumu(i-1) + ftns(i);
+    end
+end
+
+for i=1:PopSize
+     r = rand();
+     s = find(cumu>r);
+     sel(i) = s(1);
+end
+
+new_pop = cell(PopSize,1);
+for i=1:PopSize
+     new_pop{i} = pop{sel(i)};
+end
+
+for i=1:PopSize
+    ftns(i) = get_fitness(pop{i}); 
+end
+[p,q] = min(ftns);
+for i=1:PopSize
+    ftns(i) = get_fitness(new_pop{i}); 
+end
+[r,s] = max(ftns);
+new_pop{s} = pop{q};
+
+
+function NewPop = crossover(pop,c_rate)
+PopSize = size(pop,1);
+chr_length = size(pop{1},1);
+ftns = inf(PopSize,1);
+for i=1:PopSize
+    ftns(i) = get_fitness(pop{i}); 
+end
+[p,q] = min(ftns);
+sl = [];
+for i=1:PopSize
+    r = rand();
+    if r<c_rate
+        sl = [sl i];
+    end
+end
+
+% cr_point = randi(PopSize);
+% cr_point = (PopSize*0.2) + ceil(cr_point.*(PopSize-2*ceil(PopSize*0.2))./PopSize);
+cr_point = randi(chr_length);
+cr_point = (chr_length*0.2) + ceil(cr_point.*(chr_length-2*ceil(chr_length*0.2))./chr_length);
+
+s = size(sl);
+for i=1:s
+    if s==1
+        break;
+    end
+    if i==s
+        pop{sl(1)}(1:cr_point) = pop{sl(s)}(1:cr_point);
+    else
+        p = pop{sl(i)};
+        pop{sl(i)}(1:cr_point) = pop{sl(i+1)}(1:cr_point);
+    end
+end
+NewPop = pop;
+
+for i=1:PopSize
+    ftns(i) = get_fitness(NewPop{i}); 
+end
+[r,s] = max(ftns);
+NewPop{s} = pop{q};
+
+function NewPop = mutate(pop,mu_rate,match_matrix)
+ChrLength = size(pop{1},1);
+PopSize = size(pop,1);
+ftns = inf(PopSize,1);
+for i=1:PopSize
+    ftns(i) = get_fitness(pop{i}); 
+end
+[p,q] = min(ftns);
+mu_points = randi(ChrLength,3,1);
+for i=1:PopSize
+    r = rand();
+    if r<mu_rate
+        s = size(mu_points);
+        for j=1:s
+            if match_matrix{mu_points(j)} ~= 0
+                pop{i}(mu_points(j)) = match_matrix{mu_points(j)}(randi(numel(match_matrix{mu_points(j)})));
+            end
+        end
+    end
+end
+NewPop = pop;
+for i=1:PopSize
+    ftns(i) = get_fitness(NewPop{i}); 
+end
+[r,s] = max(ftns);
+NewPop{s} = pop{q};
+
+function WaitMat = get_wait_matrix(grp_jobs,dist_mat)
+global n_t_loc;
+global n_o_loc;
+global duration
+WaitMat = zeros(n_o_loc,1);
+for i=1:n_t_loc
+    WaitVal = 0;
+    s = size(grp_jobs{i},1);
+    for j=1:s
+        WaitMat(grp_jobs{i}(j)) = WaitVal + dist_mat{i}(j);
+        WaitVal = WaitVal + dist_mat{i}(j) + duration(grp_jobs{i}(j));
+    end
+end
+
+
+
+function edtxtDcof_Callback(hObject, eventdata, handles)
+% hObject    handle to edtxtDcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edtxtDcof as text
+%        str2double(get(hObject,'String')) returns contents of edtxtDcof as a double
+global dist_coef;
+dist_coef = str2double(get(hObject,'String'));
+
+
+% --- Executes during object creation, after setting all properties.
+function edtxtDcof_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edtxtDcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edtxtPcof_Callback(hObject, eventdata, handles)
+% hObject    handle to edtxtPcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edtxtPcof as text
+%        str2double(get(hObject,'String')) returns contents of edtxtPcof as a double
+global wait_coef;
+wait_coef = str2double(get(hObject,'String'));
+
+% --- Executes during object creation, after setting all properties.
+function edtxtPcof_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edtxtPcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edtxtBcof_Callback(hObject, eventdata, handles)
+% hObject    handle to edtxtBcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edtxtBcof as text
+%        str2double(get(hObject,'String')) returns contents of edtxtBcof as a double
+global balance_coef;
+balance_coef = str2double(get(hObject,'String'));
+
+% --- Executes during object creation, after setting all properties.
+function edtxtBcof_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edtxtBcof (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in btnRerun.
+function btnRerun_Callback(hObject, eventdata, handles)
+% hObject    handle to btnRerun (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global se_no
+global rjcted
+global groups_idx
+global n_t_loc
+for i=1:n_t_loc
+    rjcted = [rjcted se_no(groups_idx{i}(1))];
+end
+

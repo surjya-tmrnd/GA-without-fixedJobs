@@ -1,0 +1,50 @@
+1,0,32.874,86.454,B,b,p,60,P1,Green,10,1,Normal,Yes,No,No
+2,0,1.324,51.5643,B,c,q,90,P3,Yellow,0,5,Reactive Save,No,Yes,Yes
+3,0,45.632,71.4521,A,a,r,75,P4,Red,3,8,Escalated regulatory,No,No,No
+4,0,54.123,36.764,D,e,r,75,P2,Yellow,7,3,Reactive Save,Yes,No,No
+5,0,45.231,41.986,D,d,p,90,P3,Green,2,2,Normal,No,Yes,No
+6,0,73.2153,79.3421,A,e,q,60,P2,Yellow,5,4,Reactive Save,Yes,No,No
+7,0,12.452,72.8342,B,a,q,75,P1,Red,4,7,A&R,No,No,Yes
+8,0,37.4323,74.854,B,b,r,60,P3,Green,3,9,Escalated regulatory,Yes,No,No
+9,0,78.321,62.97,A,c,p,90,P3,Yellow,8,6,Normal,Yes,Yes,Yes
+10,1,89.3412,69.5632,A,a,p,90,P4,Green,11,0,Proactive Churn,Yes,No,No
+11,0,54.321,44.6743,D,e,r,75,P2,Red,12,1,Normal,No,Yes,Yes
+12,0,61.7463,33.6742,D,c,p,60,P1,Green,2,0,Normal,Yes,No,No
+13,0,83.2365,29.672,D,c,r,90,P4,Red,1,0,Normal,Yes,No,No
+14,0,42.46348,47.9821,B,b,q,60,P3,Green,0,2,Reactive Save,No,No,No
+15,0,37.872,45.7854,B,a,p,75,P2,Red,0,12,Escalated regulatory,Yes,No,No
+16,0,62.344,77.853,A,e,q,60,P3,Yellow,5,20,Normal,Yes,Yes,No
+17,1,18.3746,88.562,B,d,p,60,P4,Green,7,1,Proactive Churn,No,No,Yes
+18,1,55.2635,41.127,D,b,q,75,P2,Yellow,8,8,A&R,Yes,Yes,No
+19,1,16.364,11.874,C,c,r,90,P4,Green,1,8,Reactive Save,No,No,Yes
+20,0,28.34,22.894,C,a,p,75,P2,Red,15,4,Normal,Yes,No,No
+21,0,24.78,32.874,C,e,r,75,P1,Yellow,2,5,Reactive Save,Yes,No,Yes
+22,0,66.3634,1.324,D,d,q,60,P4,Red,1,7,A&R,Yes,Yes,No
+23,0,76.356,45.632,A,b,p,75,P1,Red,8,2,Escalated regulatory,No,No,No
+24,0,71.983,54.123,A,a,r,60,P2,Green,5,1,Normal,Yes,No,No
+25,0,62.873,45.231,A,c,r,90,P3,Red,6,3,Proactive Churn,Yes,No,Yes
+26,0,84.231,73.2153,A,d,q,60,P1,Yellow,6,0,Reactive Save,No,No,No
+27,1,48.341,12.452,D,b,p,75,P2,Red,3,5,A&R,Yes,No,Yes
+28,0,88.453,37.4323,D,a,p,90,P1,Green,2,9,Escalated regulatory,No,No,No
+29,0,48.563,78.321,A,d,q,90,P2,Red,4,1,Proactive Churn,Yes,Yes,Yes
+30,0,64.2434,89.3412,A,c,p,90,P1,Yellow,4,4,Reactive Save,Yes,No,No
+31,1,86.454,24.78,D,a,q,75,P2,Green,20,2,Reactive Save,Yes,No,No
+32,0,51.5643,66.3634,A,b,q,75,P3,Yellow,1,0,Escalated regulatory,Yes,Yes,No
+33,0,71.4521,76.356,A,b,r,90,P4,Red,3,11,A&R,No,Yes,No
+34,0,36.764,71.983,B,a,p,75,P1,Yellow,5,2,Escalated regulatory,Yes,Yes,No
+35,1,41.986,62.873,B,e,q,90,P1,Red,7,8,Reactive Save,Yes,No,No
+36,0,79.3421,84.231,A,e,r,60,P2,Green,8,6,Normal,Yes,No,No
+37,0,72.8342,48.341,A,d,q,90,P3,Red,9,4,Proactive Churn,No,No,No
+38,1,74.854,88.453,A,c,r,75,P1,Green,1,4,A&R,No,No,No
+39,0,62.97,48.563,A,a,q,60,P1,Red,3,5,Escalated regulatory,Yes,No,Yes
+40,0,69.5632,64.2434,A,b,r,75,P4,Green,2,0,Reactive Save,Yes,No,No
+41,0,44.6743,86.454,B,d,q,90,P1,Yellow,6,9,,Yes,No,No
+42,0,33.6742,51.5643,B,b,r,75,P3,Red,0,8,Escalated regulatory,No,No,Yes
+43,0,29.672,71.4521,B,d,p,90,P2,Red,0,1,A&R,Yes,Yes,No
+44,0,47.9821,36.764,D,c,r,60,P3,Green,0,9,Normal,Yes,No,No
+45,0,45.7854,41.986,C,a,q,75,P2,Yellow,6,2,Proactive Churn,No,No,No
+46,0,77.853,79.3421,A,c,r,60,P4,Green,3,4,A&R,Yes,Yes,No
+47,1,88.562,72.8342,A,b,p,90,P1,Red,2,7,Escalated regulatory,Yes,No,No
+48,0,41.127,74.854,B,b,q,60,P2,Green,0,6,Normal,Yes,Yes,No
+49,0,11.874,42.97,C,e,r,90,P4,Red,9,2,Proactive Churn,No,No,Yes
+50,0,35.29,27.89,C,a,p,75,P3,Yellow,0,5,Reactive Save,No,No,No
